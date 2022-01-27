@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>短縮リンク生成</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+</head>
+
+<body>
+  <div class="container">
+    <div class="col-9 mx-auto">
+      <h3 class="text-center my-4">【アニメプロデューサー塾】<br>スタッフ専用 短縮リンク生成ツール</h2>
+        <div class="alert alert-info" role="alert">
+          このツールで生成された短縮リンクは、自動的にアニメプロデューサー塾のアカウントに紐づけされます。また、Bitlyのダッシュボード上で管理も可能となります（APIの仕様上、タイトル・タグの反映までに時間がかかります）。
+        </div>
+        <form>
+          <div class="form-group">
+            <label for="title"><b>タイトル　</b></label><span class="badge badge-pill badge-info">必須</span>
+            <input type="text" class="form-control" id="title" placeholder="タイトル" required>
+            <small id="titleHelp"
+              class="form-text text-muted"><b>URLを使用する場面を記入してください。</b><br>例）【一問一答】製作委員会はどのようにして決まるのか。<br>例）【講座案内】1月27日
+              片岡義朗さん</small>
+          </div>
+          <div class="form-group">
+            <label for="url"><b>短縮したいURL　</b></label><span class="badge badge-pill badge-info">必須</span>
+            <input type="url" class="form-control" id="url" placeholder="URL" required>
+            <small id="titleHelp" class="form-text text-muted"><b>短縮したいURLを記入してください。</b><br>例）CAMPFIREのページ →
+              https://community.camp-fire.jp/projects/view/63492</small>
+
+          </div>
+          <div class="form-group">
+            <label for="tag"><b>タグ　</b></label><span class="badge badge-pill badge-info">必須</span>
+            <select class="form-control" id="tag" required>
+              <option value="1q1a">一問一答</option>
+              <option value="seminar">イベント・講座案内</option>
+              <option value="others">その他</option>
+            </select>
+          </div>
+          <div class="d-grid gap-2 col-4 mx-auto">
+            <button type="submit" class="btn btn-primary">短縮リンクを生成する</button>
+          </div>
+
+        </form>
+    
+        <div class="card my-4">
+          <h5 class="card-header">生成結果</h5>
+          <div class="card-body">
+            <p class="card-text">タイトル：
+            <div id="createdTitle"></div>
+            </p>
+            <p class="card-text">短縮URL：
+            <div id="createdURL"></div>
+            </p>
+
+          </div>
+        </div>
+
+
+    </div>
+
+    
+  <footer class="pt-4 my-md-5 pt-md-5 border-top">
+    <div class="row">
+      <div class="col-12 col-md">
+      <small class="d-block mb-3 text-muted text-center">&copy; 2021 Kazuya Haraguchi All rights reserved.</small>
+      </div>
+    </div>
+  </footer>
+  </div>
+
+  <script>
+    window.onload = () => {
+      document.addEventListener("submit", createURL);
+    }
+
+    // window.onload = function(){
+    //     // documentはブラウザに読み込まれたウェブページを表す
+    //     // getElementByIdでHTML上で使うidを参照する
+    //     // innerHTMLではHTML要素の内容を書き変える
+    //     document.getElementById("createdURL").innerHTML
+    //       = "Hello World!＜br＞↑JavaScriptによる出力";
+    //   }
+
+
+
+
+    function createURL(event) {
+      const inputTitle = document.getElementById("title").value
+      const inputUrl = document.getElementById("url").value
+      const inputTag = document.getElementById("tag").value
+      const uniqueID = Math.random();
+      const modifiedURL = inputUrl + "#" + uniqueID
+      console.log(inputTag)
+      to_json = {
+        long_url: modifiedURL,
+        title: inputTitle,
+        tags: [inputTag],
+      }
+      fetch("https://api-ssl.bitly.com/v4/bitlinks", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer 671136e21626662c3d7d20ed8e7f1ea143f49b86",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(to_json),
+
+      })
+
+        .then(function (response) {
+          return response.text()
+          //.text();
+        }).then(function (text) {
+          const urlField = document.querySelector('#createdURL');
+          const titleField = document.querySelector('#createdTitle');
+          const titlefordisplay = text.match(/(?<="title":").*?(?=","ar)/);
+          const urlfordisplay = text.match(/(?<="link":").*?(?=","custom_bitlinks")/);
+          urlField.innerHTML = urlfordisplay[0];
+          titleField.innerHTML = titlefordisplay[0];
+
+        });
+      //   .then(response => response.json())
+      // .then(data => {
+      //   console.log(data);
+      // });
+      event.preventDefault();
+      // throw Error();
+      //return false;
+    }
+  </script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+    integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+    integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>
